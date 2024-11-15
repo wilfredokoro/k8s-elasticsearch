@@ -1,12 +1,15 @@
-### Create the Namespace for Elasticsearch
+
+# Deploying Elasticsearch in Kubernetes
+
+## Create the Namespace for Elasticsearch
 
 ```bash
 kubectl create namespace elasticsearch
 ```
 
-### Deploy the Elasticsearch StatefulSet and Service
+## Deploy the Elasticsearch StatefulSet and Service
 
-## Save the following YAML as elasticsearch-deployment.yaml
+### Save the following YAML as elasticsearch-deployment.yaml
 
 ```bash
 apiVersion: apps/v1
@@ -74,12 +77,12 @@ spec:
   type: NodePort  # ClusterIP
 ```
 
-## Apply this file to create the StatefulSet and Service:
+### Apply this file to create the StatefulSet and Service:
 ```bash
 kubectl apply -f elasticsearch-deployment.yaml -n elasticsearch
 ```
 
-## Once the service is created, get the external IP address:
+### Once the service is created, get the external IP address:
 
 ```bash
 kubectl get svc -n elasticsearch
@@ -90,12 +93,14 @@ kubectl get nodes -n elasticsearch -o wide
 ![App Screenshot](Screenshot1.png)
 
 
-## In your browser, visit:
+### In your browser, visit:
 
 ```bash
 http://<EXTERNAL-IP>:32000
 ```
+
 ![App Screenshot](Screenshot2.png)
+
 
 ![App Screenshot](Screenshot3.png)
 
