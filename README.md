@@ -1,108 +1,59 @@
+## Deploying Elasticsearch in Kubernetes
 
-# Deploying Elasticsearch in Kubernetes
-
-## Create the Namespace for Elasticsearch
-
+### update the eks cluster
 ```bash
-kubectl create namespace elasticsearch
+aws eks update-kubeconfig --name demo
 ```
 
-## Deploy the Elasticsearch StatefulSet and Service
-
-### Save the following YAML as elasticsearch-deployment.yaml
-
+### Elastic Stack Helm Chart
 ```bash
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: elasticsearch
-  labels:
-    app: elasticsearch
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: elasticsearch
-  template:
-    metadata:
-      labels:
-        app: elasticsearch
-    spec:
-      containers:
-      - name: elasticsearch
-        image: elastic/elasticsearch:7.17.2
-        env:
-        - name: discovery.type
-          value: single-node
-        - name: ELASTIC_PASSWORD
-          value: "elasticstack"
-        - name: xpack.security.enabled
-          value: "true"
-        - name: xpack.security.transport.ssl.enabled
-          value: "true"
-        - name: ES_JAVA_OPTS
-          value: "-Xms500m -Xmx1000m"
-        ports:
-        - containerPort: 9200
-        - containerPort: 9300
-        volumeMounts:
-        - name: elastic-data
-          mountPath: /usr/share/elasticsearch/data
-      volumes:
-      - name: elastic-data
-        emptyDir:
-          sizeLimit: 5Gi
----
-# Elasticsearch services
-
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: elasticsearch
-  name: elasticsearch-master
-spec:
-  ports:
-  - name: elasticsearch
-    port: 9200
-    protocol: TCP
-    targetPort: 9200
-    nodePort: 32000 
-  - name: elisticsearch-ssl
-    port: 9300
-    protocol: TCP
-    targetPort: 9300
-  selector:
-    app: elasticsearch
-  type: NodePort  # ClusterIP
+helm repo add elastic https://helm.elastic.co
+helm repo update
 ```
-
-### Apply this file to create the StatefulSet and Service:
+### Download and create values.yaml 
+#### This will create values.yaml in the directory allocated
 ```bash
-kubectl apply -f elasticsearch-deployment.yaml -n elasticsearch
+wget https://raw.githubusercontent.com/elastic/helm-charts/main/elasticsearch/values.yaml -O elastic-values.yaml
 ```
-
-### Once the service is created, get the external IP address:
+### Install Elasticsearch using Helm Chart
 
 ```bash
-kubectl get svc -n elasticsearch
-
-kubectl get nodes -n elasticsearch -o wide
-``` 
+helm install elasticsearch --values elastic-values.yaml  elastic/elasticsearch
+```
+### Output file copy to a clipboard
 
 ![App Screenshot](Screenshot1.png)
 
+<!-- 1. Watch all cluster members come up.
+  $ kubectl get pods --namespace=default -l app=elasticsearch-master -w
+2. Retrieve elastic user's password.
+  $ kubectl get secrets --namespace=default elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d
+3. Test cluster health using Helm test.
+  $ helm --namespace=default test elasticsearch
+wilfredokoro@Wilfreds-MacBook-Pro k8s-elasticsearch02 %  -->
 
-### In your browser, visit:
 
+### Watch all cluster members come up:
 ```bash
-http://<EXTERNAL-IP>:32000
+kubectl get pods --namespace=default -l app=elasticsearch-master -w
 ```
-
 ![App Screenshot](Screenshot2.png)
 
+### Retrieve elastic user's password.:
 
+```bash
+kubectl get secrets --namespace=default elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d
+``` 
 ![App Screenshot](Screenshot3.png)
+
+
+
+### Test cluster health using Helm test:
+
+```bash
+helm --namespace=default test elasticsearch
+```
+![App Screenshot](Screenshot4.png)
 
 
 
